@@ -57,7 +57,8 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
     else window.location.assign(url)
   }
 
-  const sinProductos = !lineas.some((l) => l.productoId) || guardando
+  const faltaCliente = !cliente.nombre.trim()
+  const sinProductos = !lineas.some((l) => l.productoId) || guardando || faltaCliente
   const pendientes = lineas.filter((l) => l.estado === 'duda' || l.estado === 'no').length
 
   return (
@@ -87,9 +88,11 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
         </div>
 
         <div className="datos-cliente">
-          <label>Cliente<input value={cliente.nombre} onChange={(e) => actualizar({ cliente: { ...cliente, nombre: e.target.value } })} placeholder="Nombre o razón social" /></label>
-          <label>CUIT<input value={cliente.cuit} onChange={(e) => actualizar({ cliente: { ...cliente, cuit: e.target.value } })} placeholder="Opcional" /></label>
-          <label>WhatsApp<input value={cliente.telefono} onChange={(e) => actualizar({ cliente: { ...cliente, telefono: e.target.value } })} placeholder="381..." /></label>
+          <label className={faltaCliente && lineas.length ? 'falta' : ''}>Cliente *
+            <input value={cliente.nombre} onChange={(e) => actualizar({ cliente: { ...cliente, nombre: e.target.value } })} placeholder="Nombre o razón social" required />
+          </label>
+          <label>CUIT (opcional)<input value={cliente.cuit} onChange={(e) => actualizar({ cliente: { ...cliente, cuit: e.target.value } })} placeholder="Opcional" /></label>
+          <label>WhatsApp (opcional)<input value={cliente.telefono} onChange={(e) => actualizar({ cliente: { ...cliente, telefono: e.target.value } })} placeholder="381..." /></label>
           <label>Lista
             <div className="segmentado">
               {Object.values(LISTAS).map((l) => (
@@ -171,6 +174,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
             <button onClick={guardarPrimero} disabled={sinProductos}>{guardando ? 'Guardando...' : 'Guardar'}</button>
             <button onClick={descargarPdf} disabled={sinProductos}>Descargar PDF</button>
             <button className="whatsapp" onClick={enviarWhatsapp} disabled={sinProductos}>Enviar por WhatsApp</button>
+            {faltaCliente && lineas.length > 0 && <p className="falta-nombre">Falta el nombre del cliente</p>}
           </div>
         </div>
         <DocumentoPresupuesto presupuesto={presupuesto} empresa={empresa} />

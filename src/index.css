@@ -105,6 +105,8 @@ td { padding: 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
 .quitar { border: 0; background: none; font-size: 18px; color: var(--suave); }
 .quitar:hover { color: var(--rojo); }
 .observaciones { margin-top: 16px; }
+label.falta input { border-color: var(--rojo); background: var(--rojo-claro); }
+.falta-nombre { color: var(--rojo); font-size: 12px; margin: 0; }
 .pie-revision { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
 .total-revision { font-size: 15px; color: var(--suave); }
 .total-revision strong { color: var(--texto); font-size: 20px; margin-left: 8px; }

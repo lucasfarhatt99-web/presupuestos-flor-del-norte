@@ -1,13 +1,13 @@
 // Acceso a datos en Supabase. Los permisos (quien ve que) los aplica la base con RLS: ver supabase/schema.sql.
 import { supabase } from './supabase.js'
 
+// Los campos vacios no se muestran en el presupuesto
 export const EMPRESA_POR_DEFECTO = {
-  razonSocial: 'Flor del Norte',
-  cuit: '[completar CUIT]',
-  condicionIva: '[completar condición IVA]',
-  direccion: '[completar dirección]',
-  telefono: '[completar teléfono]',
-  email: '[completar email]',
+  razonSocial: 'FLOR DEL NORTE SAS',
+  cuit: '30-71691390-9',
+  condicionIva: '',
+  direccion: 'Américo Vespucio 218, Banda del Río Salí, Tucumán',
+  email: '',
   puntoVenta: 1,
   validezDias: 7,
   leyendaIva: '[completar: precios con IVA incluido / más IVA]',

@@ -3,10 +3,9 @@ import { useState } from 'react'
 const CAMPOS = [
   ['razonSocial', 'Razón social'],
   ['cuit', 'CUIT'],
-  ['condicionIva', 'Condición frente al IVA'],
+  ['condicionIva', 'Condición frente al IVA (opcional)'],
   ['direccion', 'Dirección'],
-  ['telefono', 'Teléfono'],
-  ['email', 'Email'],
+  ['email', 'Email (opcional)'],
   ['puntoVenta', 'Punto de venta', 'number'],
   ['validezDias', 'Validez del presupuesto (días)', 'number'],
   ['leyendaIva', 'Leyenda de IVA'],
