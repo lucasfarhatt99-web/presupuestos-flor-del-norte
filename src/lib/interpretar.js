@@ -1,5 +1,5 @@
 // Interpreta un mensaje de WhatsApp y lo convierte en lineas de presupuesto.
-// Version local basada en reglas. La lectura de prints (imagenes) se suma con IA en la fase siguiente.
+// Funciona por reglas: alias de cada familia mas los apodos que la app aprende de las correcciones.
 import { PRODUCTOS, ALIAS_FAMILIA } from '../data/catalogo.js'
 
 export const MENSAJE_EJEMPLO = 'Hola! me pasás precio por un mix de 4 almohaditas, 20 tutucas y 15 tostadas de arroz? Gracias'
@@ -19,7 +19,7 @@ export const normalizar = (texto) =>
     .replace(/\s+/g, ' ')
     .trim()
 
-const singular = (palabra) => palabra.replace(/(es|s)$/, '')
+const singular = (palabra) => palabra.replace(/s$/, '')
 
 // Divide el mensaje en fragmentos que probablemente contienen un producto cada uno
 const fragmentar = (texto) =>
@@ -96,14 +96,61 @@ const elegirProducto = (familia, fragmento, gramos) => {
 // Para mostrar: saca saludos antes de la cantidad y despedidas al final
 const textoPedido = (fragmento) => {
   const inicio = fragmento.search(/\d/)
-  return (inicio > 0 ? fragmento.slice(inicio) : fragmento).replace(/\b(gracias|saludos|abrazo)\b.*$/, '').trim()
+  const saludo = inicio > 0 && !detectarFamilia(fragmento.slice(0, inicio))
+  return (saludo ? fragmento.slice(inicio) : fragmento).replace(/\b(gracias|saludos|abrazo)\b.*$/, '').trim()
 }
 
-export function interpretarMensaje(texto) {
+const PALABRAS_VACIAS = new Set([
+  'de', 'del', 'la', 'las', 'el', 'los', 'un', 'una', 'unos', 'unas', 'x', 'por', 'favor', 'mas', 'con',
+  'caja', 'bolsa', 'bolsita', 'paquete', 'unidad', 'me', 'pasa', 'pasas', 'precio', 'quiero', 'necesito',
+  'mandame', 'hola', 'buen', 'dia', 'gracias', 'docena', 'media', 'tambien', 'otro', 'otra', 'otros', 'otras',
+  ...Object.keys(NUMEROS),
+])
+
+// "7 cajas de palitos salados" -> "palito salado". Es la clave con la que se guarda un apodo.
+export const extraerApodo = (texto) =>
+  normalizar(texto)
+    .replace(/\d+(?:[.,]\d+)?\s*(?:g|gr|grs|kg|kilo|kilos)\b/g, ' ')
+    .replace(/[\d,.;/-]+/g, ' ')
+    .split(' ')
+    .filter((p) => !PALABRAS_VACIAS.has(p))
+    .map(singular)
+    .filter((p) => p.length > 1 && !PALABRAS_VACIAS.has(p))
+    .join(' ')
+
+// Busca el apodo aprendido mas largo contenido en el fragmento
+const buscarApodo = (fragmento, apodos) => {
+  const texto = ` ${extraerApodo(fragmento)} `
+  let mejor = null
+  for (const [apodo, destino] of Object.entries(apodos)) {
+    if (texto.includes(` ${apodo} `) && (!mejor || apodo.length > mejor.apodo.length)) mejor = { apodo, ...destino }
+  }
+  return mejor
+}
+
+// apodos: { "palito salado": { productoId, unidad } } aprendidos de correcciones anteriores
+export function interpretarMensaje(texto, apodos = {}) {
   const lineas = []
   for (const fragmento of fragmentar(texto)) {
-    const familia = detectarFamilia(fragmento)
     const cantidad = leerCantidad(fragmento)
+    const aprendido = buscarApodo(fragmento, apodos)
+    const productoAprendido = aprendido && PRODUCTOS.find((p) => p.id === aprendido.productoId)
+    if (productoAprendido) {
+      const producto = productoAprendido
+      const unidad = producto.tipo === 'granel' ? 'bolsa' : leerUnidad(fragmento) ?? aprendido.unidad ?? 'caja'
+      lineas.push({
+        original: textoPedido(fragmento),
+        estado: cantidad ? 'ok' : 'duda',
+        aprendido: aprendido.apodo,
+        cantidad: cantidad ?? 1,
+        productoId: producto.id,
+        unidad,
+        alternativas: PRODUCTOS.filter((p) => p.familia === producto.familia).map((p) => p.id),
+        motivo: cantidad ? '' : 'cantidad no indicada',
+      })
+      continue
+    }
+    const familia = detectarFamilia(fragmento)
     if (!familia) {
       // Solo se reporta como "no encontrado" si parece un pedido (tiene cantidad)
       if (cantidad) lineas.push({ original: textoPedido(fragmento), estado: 'no', cantidad, productoId: null, unidad: 'bolsa', alternativas: [] })

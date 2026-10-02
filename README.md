@@ -1,16 +1,37 @@
-# React + Vite
+# Presupuestos Flor del Norte
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Arma presupuestos formales a partir de un pedido de WhatsApp pegado como texto.
 
-Currently, two official plugins are available:
+## Flujo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Pegar el mensaje del cliente y tocar **Interpretar pedido**.
+2. Revisar las líneas: cada una queda *Identificado*, *Revisar* o *Sin coincidencia*. Se corrige producto, caja/bolsa y cantidad.
+3. **Guardar**: queda en el historial y la app aprende los nombres corregidos (sección **Apodos**).
+4. **Descargar PDF** (hoja A4 con rótulo) o **Enviar por WhatsApp**.
 
-## React Compiler
+## Dónde está cada cosa
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Archivo | Qué tiene |
+|---|---|
+| `src/data/catalogo.js` | Productos, precios de las listas Premium y Mayorista, condiciones y alias de fábrica |
+| `src/lib/interpretar.js` | Intérprete de mensajes (reglas + apodos aprendidos) |
+| `src/lib/aprender.js` | Cómo se aprenden apodos al guardar |
+| `src/lib/almacen.js` | Persistencia (hoy `localStorage`, después Supabase) |
+| `src/components/DocumentoPresupuesto.jsx` | La hoja del presupuesto que se imprime |
 
-## Expanding the Oxlint configuration
+Para actualizar precios, editar `src/data/catalogo.js`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+
+`http://localhost:5173/?ejemplo` abre con un pedido de muestra ya interpretado.
+
+## Pendiente
+
+- Supabase: login (admin y vendedores), datos compartidos online.
+- Publicación en Cloudflare Pages.
+- Reportes y facturación ARCA.

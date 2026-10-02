@@ -11,7 +11,7 @@ const ESTADOS = {
   manual: { texto: 'Manual', clase: 'manual' },
 }
 
-export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, empresa }) {
+export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, empresa, apodos }) {
   const [mensaje, setMensaje] = useState(presupuesto.mensajeOriginal ?? '')
   const { lineas, lista, descuentoPct, cliente } = presupuesto
   const { total } = calcular(lineas, lista, descuentoPct)
@@ -20,7 +20,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
   const actualizarLinea = (n, cambios) =>
     actualizar({ lineas: lineas.map((l, i) => (i === n ? { ...l, ...cambios, estado: cambios.estado ?? (l.estado === 'no' ? 'manual' : l.estado === 'duda' ? 'ok' : l.estado) } : l)) })
 
-  const interpretar = () => actualizar({ lineas: interpretarMensaje(mensaje), mensajeOriginal: mensaje })
+  const interpretar = () => actualizar({ lineas: interpretarMensaje(mensaje, apodos), mensajeOriginal: mensaje })
 
   const agregarLinea = () =>
     actualizar({ lineas: [...lineas, { original: '', estado: 'manual', cantidad: 1, productoId: PRODUCTOS[0].id, unidad: 'caja', alternativas: [] }] })
@@ -28,7 +28,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
   const cambiarProducto = (n, productoId) => {
     const producto = productoPorId(productoId)
     const unidad = unidadesDe(producto).includes(lineas[n].unidad) ? lineas[n].unidad : unidadesDe(producto)[0]
-    actualizarLinea(n, { productoId, unidad })
+    actualizarLinea(n, { productoId, unidad, corregido: true })
   }
 
   const enviarWhatsapp = () => {
@@ -54,10 +54,10 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
           <button className="primario" onClick={interpretar} disabled={!mensaje.trim()}>Interpretar pedido</button>
           <button className="link" onClick={() => setMensaje(EJEMPLO)}>Usar mensaje de ejemplo</button>
         </div>
-        <div className="zona-imagen" aria-disabled="true">
-          <strong>Subir print de WhatsApp</strong>
-          <span>La lectura de capturas de pantalla se activa al conectar la IA (próxima etapa).</span>
-        </div>
+        <p className="ayuda">
+          En el celular: mantené apretado el mensaje y tocá Copiar (si son varios, seleccionalos todos).
+          Cuando corregís un producto y guardás, la app aprende ese nombre para la próxima.
+        </p>
       </section>
 
       <section className="panel revision no-imprimir">
@@ -99,11 +99,13 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
                       <td>
                         <span className={`estado ${ESTADOS[l.estado].clase}`}>{ESTADOS[l.estado].texto}</span>
                         {l.motivo && l.estado === 'duda' && <small className="motivo">{l.motivo}</small>}
+                        {l.aprendido && !l.corregido && <small className="aprendido">por apodo "{l.aprendido}"</small>}
+                        {l.corregido && l.original && <small className="aprendido">se aprende al guardar</small>}
                       </td>
                       <td className="original">{l.original || '-'}</td>
                       <td><input type="number" min="1" className="cantidad" value={l.cantidad} onChange={(e) => actualizarLinea(n, { cantidad: Number(e.target.value) })} /></td>
                       <td>
-                        <select value={l.unidad} onChange={(e) => actualizarLinea(n, { unidad: e.target.value })} disabled={!producto}>
+                        <select value={l.unidad} onChange={(e) => actualizarLinea(n, { unidad: e.target.value, corregido: true })} disabled={!producto}>
                           {(producto ? unidadesDe(producto) : ['bolsa']).map((u) => (
                             <option key={u} value={u}>{u === 'caja' && producto ? `Caja x${producto.bolsasPorCaja}` : 'Bolsa'}</option>
                           ))}

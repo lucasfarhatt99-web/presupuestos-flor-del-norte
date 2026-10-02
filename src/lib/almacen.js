@@ -1,5 +1,5 @@
 // Persistencia local del bosquejo. En la version online esto pasa a Supabase.
-const CLAVES = { empresa: 'fdn.empresa', presupuestos: 'fdn.presupuestos' }
+const CLAVES = { empresa: 'fdn.empresa', presupuestos: 'fdn.presupuestos', apodos: 'fdn.apodos' }
 
 const leer = (clave, defecto) => {
   try {
@@ -36,6 +36,10 @@ export const guardarEmpresa = (empresa) => guardar(CLAVES.empresa, empresa)
 
 export const leerPresupuestos = () => leer(CLAVES.presupuestos, [])
 export const guardarPresupuestos = (lista) => guardar(CLAVES.presupuestos, lista)
+
+// { "palito salado": { productoId, unidad, ejemplo, aprendido } }
+export const leerApodos = () => leer(CLAVES.apodos, {})
+export const guardarApodos = (apodos) => guardar(CLAVES.apodos, apodos)
 
 export const siguienteNumero = (presupuestos) =>
   presupuestos.reduce((max, p) => Math.max(max, p.numero), 0) + 1
