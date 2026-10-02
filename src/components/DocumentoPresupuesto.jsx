@@ -3,8 +3,8 @@ import { calcular, moneda, fecha, sumarDias, numeroComprobante, plural } from '.
 
 // Hoja A4 del presupuesto. Se imprime / guarda como PDF con window.print().
 export default function DocumentoPresupuesto({ presupuesto, empresa }) {
-  const { lineas, lista, descuentoPct, cliente, numero, creado, observaciones } = presupuesto
-  const { items, subtotal, descuento, total } = calcular(lineas, lista, descuentoPct)
+  const { lista, descuentoPct, ivaPct, cliente, numero, creado, observaciones } = presupuesto
+  const { items, subtotal, descuento, flete, sinIva, iva, total } = calcular(presupuesto)
   const familias = [...new Set(items.map((i) => i.producto.familia))].filter((f) => CONDICIONES[lista][f])
 
   return (
@@ -68,7 +68,16 @@ export default function DocumentoPresupuesto({ presupuesto, empresa }) {
         <dl>
           <dt>Subtotal</dt><dd>{moneda(subtotal)}</dd>
           {descuento > 0 && (<><dt>Descuento {descuentoPct}%</dt><dd>-{moneda(descuento)}</dd></>)}
-          <dt className="total">Total</dt><dd className="total">{moneda(total)}</dd>
+          {flete > 0 && (<><dt>Flete</dt><dd>{moneda(flete)}</dd></>)}
+          {iva > 0 ? (
+            <>
+              <dt>Total sin IVA</dt><dd>{moneda(sinIva)}</dd>
+              <dt>IVA {String(ivaPct).replace('.', ',')}%</dt><dd>{moneda(iva)}</dd>
+              <dt className="total">Total con IVA</dt><dd className="total">{moneda(total)}</dd>
+            </>
+          ) : (
+            <><dt className="total">Total sin IVA</dt><dd className="total">{moneda(total)}</dd></>
+          )}
         </dl>
       </section>
 
@@ -82,7 +91,9 @@ export default function DocumentoPresupuesto({ presupuesto, empresa }) {
       <section className="hoja-bloque">
         <span className="rotulo">Condiciones</span>
         <ul>
-          {empresa.leyendaIva && <li>{empresa.leyendaIva}</li>}
+          {iva > 0
+            ? <li>Precios unitarios sin IVA. El total incluye IVA {String(ivaPct).replace('.', ',')}%.</li>
+            : empresa.leyendaIva && <li>{empresa.leyendaIva}</li>}
           <li>{empresa.condiciones}</li>
           <li>Precios de {LISTAS[lista].nombre}, vigencia {VIGENCIA_LISTAS}.
             {familias.length > 0 && ' Volúmenes de aplicación: ' + familias.map((f) => `${FAMILIAS[f]} ${CONDICIONES[lista][f].toLowerCase()}`).join('; ') + '.'}

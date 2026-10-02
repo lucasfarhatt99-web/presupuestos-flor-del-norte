@@ -10,7 +10,7 @@ export const EMPRESA_POR_DEFECTO = {
   email: '',
   puntoVenta: 1,
   validezDias: 7,
-  leyendaIva: 'Precios unitarios y totales expresados sin IVA. Al facturar se adiciona el IVA correspondiente.',
+  leyendaIva: 'Precios expresados sin IVA.',
   condiciones: 'Precios expresados en pesos argentinos. Sujetos a modificación sin previo aviso una vez vencida la validez del presupuesto.',
 }
 
@@ -49,6 +49,8 @@ const desdeFila = (f) => ({
   estado: f.estado,
   lista: f.lista,
   descuentoPct: Number(f.descuento_pct),
+  flete: Number(f.flete),
+  ivaPct: Number(f.iva_pct),
   cliente: { nombre: '', cuit: '', telefono: '', ...f.cliente },
   lineas: f.lineas,
   observaciones: f.observaciones,
@@ -62,6 +64,8 @@ const haciaFila = (p, total) => ({
   estado: p.estado,
   lista: p.lista,
   descuento_pct: Number(p.descuentoPct) || 0,
+  flete: Number(p.flete) || 0,
+  iva_pct: Number(p.ivaPct) || 0,
   cliente: p.cliente,
   lineas: p.lineas,
   observaciones: p.observaciones,

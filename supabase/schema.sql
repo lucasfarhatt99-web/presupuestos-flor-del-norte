@@ -85,7 +85,9 @@ create table public.presupuestos (
   lineas jsonb not null default '[]'::jsonb,
   observaciones text not null default '',
   mensaje_original text not null default '',
-  -- se guarda calculado para que los reportes no tengan que recalcular precios
+  flete numeric not null default 0,
+  iva_pct numeric not null default 0 check (iva_pct in (0, 10.5, 21)),
+  -- productos con descuento, sin flete ni IVA; se guarda calculado para que los reportes no recalculen precios
   total numeric not null default 0
 );
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PRODUCTOS, LISTAS, productoPorId, etiquetaProducto, unidadesDe, precioDe } from '../data/catalogo.js'
 import { interpretarMensaje, MENSAJE_EJEMPLO as EJEMPLO } from '../lib/interpretar.js'
-import { calcular, moneda, numeroComprobante } from '../lib/formato.js'
+import { calcular, moneda, numeroComprobante, ALICUOTAS_IVA } from '../lib/formato.js'
 import DocumentoPresupuesto from './DocumentoPresupuesto.jsx'
 
 const ESTADOS = {
@@ -15,7 +15,8 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
   const [mensaje, setMensaje] = useState(presupuesto.mensajeOriginal ?? '')
   const [guardando, setGuardando] = useState(false)
   const { lineas, lista, descuentoPct, cliente } = presupuesto
-  const { total } = calcular(lineas, lista, descuentoPct)
+  const importes = calcular(presupuesto)
+  const conIva = Number(presupuesto.ivaPct) > 0
 
   const actualizar = (cambios) => onCambiar({ ...presupuesto, ...cambios })
   const actualizarLinea = (n, cambios) =>
@@ -49,9 +50,10 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
     const ventana = window.open('', '_blank')
     const guardado = await guardarPrimero()
     if (!guardado) return ventana?.close()
-    const { items } = calcular(lineas, lista, descuentoPct)
+    const { items, flete, total } = importes
     const detalle = items.map((i) => `- ${i.cantidad} ${i.unidad}${i.cantidad === 1 ? '' : 's'} ${etiquetaProducto(i.producto)}: ${moneda(i.importe)}`).join('\n')
-    const texto = `*Presupuesto Flor del Norte N° ${numeroComprobante(empresa.puntoVenta, guardado.numero)}*\n${detalle}\n*Total: ${moneda(total)}*\nTe adjunto el PDF con el detalle.`
+    const lineaFlete = flete ? `\nFlete: ${moneda(flete)}` : ''
+    const texto = `*Presupuesto Flor del Norte N° ${numeroComprobante(empresa.puntoVenta, guardado.numero)}*\n${detalle}${lineaFlete}\n*Total ${conIva ? 'con IVA' : 'sin IVA'}: ${moneda(total)}*\nTe adjunto el PDF con el detalle.`
     const url = `https://wa.me/${(cliente.telefono || '').replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`
     if (ventana) ventana.location.replace(url)
     else window.location.assign(url)
@@ -158,12 +160,30 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
         )}
 
         <label className="observaciones">Observaciones (opcional)
-          <input value={presupuesto.observaciones} onChange={(e) => actualizar({ observaciones: e.target.value })} placeholder="Ej: entrega en 48 hs, flete a cargo del cliente" />
+          <input value={presupuesto.observaciones} onChange={(e) => actualizar({ observaciones: e.target.value })} placeholder="Ej: entrega en 48 hs" />
         </label>
+
+        <div className="extras">
+          <label>Flete $ (opcional)
+            <input type="number" min="0" step="1" value={presupuesto.flete || ''} placeholder="Sin flete"
+              onChange={(e) => actualizar({ flete: Number(e.target.value) || 0 })} />
+          </label>
+          <label className="con-iva">
+            <span><input type="checkbox" checked={conIva} onChange={(e) => actualizar({ ivaPct: e.target.checked ? ALICUOTAS_IVA[0] : 0 })} /> Agregar IVA</span>
+            {conIva && (
+              <select value={presupuesto.ivaPct} onChange={(e) => actualizar({ ivaPct: Number(e.target.value) })}>
+                {ALICUOTAS_IVA.map((a) => <option key={a} value={a}>{String(a).replace('.', ',')}%</option>)}
+              </select>
+            )}
+          </label>
+        </div>
 
         <div className="pie-revision">
           <button className="link" onClick={agregarLinea}>+ Agregar producto</button>
-          <div className="total-revision">Total <strong>{moneda(total)}</strong></div>
+          <div className="total-revision">
+            {(importes.flete > 0 || conIva) && <small>Productos {moneda(importes.neto)}{importes.flete > 0 && ` + flete ${moneda(importes.flete)}`}{conIva && ` + IVA ${moneda(importes.iva)}`}</small>}
+            Total {conIva ? 'con IVA' : 'sin IVA'} <strong>{moneda(importes.total)}</strong>
+          </div>
         </div>
       </section>
 

@@ -32,6 +32,8 @@ const presupuestoVacio = () => ({
   estado: 'Pendiente',
   lista: 'mayorista',
   descuentoPct: 0,
+  flete: 0,
+  ivaPct: 0,
   cliente: { nombre: '', cuit: '', telefono: '' },
   lineas: [],
   observaciones: '',
@@ -123,8 +125,7 @@ function Aplicacion({ perfil }) {
         setApodos((previos) => ({ ...previos, ...Object.fromEntries(aprendidos) }))
       }
       const limpio = { ...actual, lineas: actual.lineas.map((l) => ({ ...l, corregido: false })) }
-      const total = calcular(limpio.lineas, limpio.lista, limpio.descuentoPct).total
-      const guardado = { ...(await guardarPresupuesto(limpio, total)), clave: actual.clave }
+      const guardado = { ...(await guardarPresupuesto(limpio, calcular(limpio).neto)), clave: actual.clave }
       setActual(guardado)
       setPresupuestos((lista) => (lista.some((p) => p.numero === guardado.numero)
         ? lista.map((p) => (p.numero === guardado.numero ? guardado : p))

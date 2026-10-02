@@ -107,6 +107,13 @@ td { padding: 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
 .observaciones { margin-top: 16px; }
 label.falta input { border-color: var(--rojo); background: var(--rojo-claro); }
 .falta-nombre { color: var(--rojo); font-size: 12px; margin: 0; }
+.extras { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-top: 14px; }
+.extras label:first-child { width: 180px; }
+.con-iva { flex-direction: row; align-items: center; gap: 10px; min-height: 38px; }
+.con-iva span { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--texto); cursor: pointer; }
+.con-iva input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--verde); }
+.con-iva select { width: auto; }
+.total-revision small { display: block; text-align: right; font-size: 12px; }
 .pie-revision { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
 .total-revision { font-size: 15px; color: var(--suave); }
 .total-revision strong { color: var(--texto); font-size: 20px; margin-left: 8px; }
