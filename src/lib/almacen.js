@@ -10,7 +10,7 @@ export const EMPRESA_POR_DEFECTO = {
   email: '',
   puntoVenta: 1,
   validezDias: 7,
-  leyendaIva: '[completar: precios con IVA incluido / más IVA]',
+  leyendaIva: 'Precios unitarios y totales expresados sin IVA. Al facturar se adiciona el IVA correspondiente.',
   condiciones: 'Precios expresados en pesos argentinos. Sujetos a modificación sin previo aviso una vez vencida la validez del presupuesto.',
 }
 
