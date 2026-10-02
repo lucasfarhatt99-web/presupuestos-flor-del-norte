@@ -13,6 +13,7 @@ const ESTADOS = {
 
 export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, empresa, apodos }) {
   const [mensaje, setMensaje] = useState(presupuesto.mensajeOriginal ?? '')
+  const [guardando, setGuardando] = useState(false)
   const { lineas, lista, descuentoPct, cliente } = presupuesto
   const { total } = calcular(lineas, lista, descuentoPct)
 
@@ -31,13 +32,32 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
     actualizarLinea(n, { productoId, unidad, corregido: true })
   }
 
-  const enviarWhatsapp = () => {
-    const { items } = calcular(lineas, lista, descuentoPct)
-    const detalle = items.map((i) => `- ${i.cantidad} ${i.unidad}${i.cantidad === 1 ? '' : 's'} ${etiquetaProducto(i.producto)}: ${moneda(i.importe)}`).join('\n')
-    const texto = `*Presupuesto Flor del Norte N° ${numeroComprobante(empresa.puntoVenta, presupuesto.numero)}*\n${detalle}\n*Total: ${moneda(total)}*\nTe adjunto el PDF con el detalle.`
-    window.open(`https://wa.me/${(cliente.telefono || '').replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`, '_blank')
+  // PDF y WhatsApp guardan antes, para que el documento tenga numero y quede en el historial
+  const guardarPrimero = async () => {
+    setGuardando(true)
+    const guardado = await onGuardar()
+    setGuardando(false)
+    return guardado
   }
 
+  const descargarPdf = async () => {
+    if (await guardarPrimero()) setTimeout(() => window.print(), 150)
+  }
+
+  const enviarWhatsapp = async () => {
+    // La ventana se abre antes del await para que el navegador no la bloquee como popup
+    const ventana = window.open('', '_blank')
+    const guardado = await guardarPrimero()
+    if (!guardado) return ventana?.close()
+    const { items } = calcular(lineas, lista, descuentoPct)
+    const detalle = items.map((i) => `- ${i.cantidad} ${i.unidad}${i.cantidad === 1 ? '' : 's'} ${etiquetaProducto(i.producto)}: ${moneda(i.importe)}`).join('\n')
+    const texto = `*Presupuesto Flor del Norte N° ${numeroComprobante(empresa.puntoVenta, guardado.numero)}*\n${detalle}\n*Total: ${moneda(total)}*\nTe adjunto el PDF con el detalle.`
+    const url = `https://wa.me/${(cliente.telefono || '').replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`
+    if (ventana) ventana.location.replace(url)
+    else window.location.assign(url)
+  }
+
+  const sinProductos = !lineas.some((l) => l.productoId) || guardando
   const pendientes = lineas.filter((l) => l.estado === 'duda' || l.estado === 'no').length
 
   return (
@@ -148,9 +168,9 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
         <div className="panel-titulo no-imprimir">
           <h2>3. Presupuesto</h2>
           <div className="acciones">
-            <button onClick={onGuardar} disabled={!lineas.some((l) => l.productoId)}>Guardar</button>
-            <button onClick={() => window.print()} disabled={!lineas.some((l) => l.productoId)}>Descargar PDF</button>
-            <button className="whatsapp" onClick={enviarWhatsapp} disabled={!lineas.some((l) => l.productoId)}>Enviar por WhatsApp</button>
+            <button onClick={guardarPrimero} disabled={sinProductos}>{guardando ? 'Guardando...' : 'Guardar'}</button>
+            <button onClick={descargarPdf} disabled={sinProductos}>Descargar PDF</button>
+            <button className="whatsapp" onClick={enviarWhatsapp} disabled={sinProductos}>Enviar por WhatsApp</button>
           </div>
         </div>
         <DocumentoPresupuesto presupuesto={presupuesto} empresa={empresa} />

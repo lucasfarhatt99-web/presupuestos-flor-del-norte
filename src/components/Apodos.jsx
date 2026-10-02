@@ -18,7 +18,8 @@ const SelectorUnidad = ({ productoId, valor, onCambiar }) => {
   )
 }
 
-export default function Apodos({ apodos, onCambiar }) {
+// onGuardar(apodo, datos) crea o actualiza uno; onBorrar(apodo) solo esta disponible para el admin
+export default function Apodos({ apodos, onGuardar, onBorrar }) {
   const [nuevo, setNuevo] = useState({ texto: '', productoId: PRODUCTOS[0].id, unidad: 'caja' })
   const entradas = Object.entries(apodos).sort(([a], [b]) => a.localeCompare(b))
   const claveNueva = extraerApodo(nuevo.texto)
@@ -26,18 +27,12 @@ export default function Apodos({ apodos, onCambiar }) {
   const editar = (apodo, cambios) => {
     const actual = { ...apodos[apodo], ...cambios }
     if (cambios.productoId && !unidadesDe(productoPorId(cambios.productoId)).includes(actual.unidad)) actual.unidad = 'bolsa'
-    onCambiar({ ...apodos, [apodo]: actual })
-  }
-
-  const quitar = (apodo) => {
-    const resto = { ...apodos }
-    delete resto[apodo]
-    onCambiar(resto)
+    onGuardar(apodo, actual)
   }
 
   const agregar = () => {
     if (claveNueva.length < 3) return
-    onCambiar({ ...apodos, [claveNueva]: { productoId: nuevo.productoId, unidad: nuevo.unidad, ejemplo: nuevo.texto, aprendido: new Date().toISOString() } })
+    onGuardar(claveNueva, { productoId: nuevo.productoId, unidad: nuevo.unidad, ejemplo: nuevo.texto, aprendido: new Date().toISOString() })
     setNuevo({ ...nuevo, texto: '' })
   }
 
@@ -75,7 +70,7 @@ export default function Apodos({ apodos, onCambiar }) {
                   <td><SelectorProducto valor={a.productoId} onCambiar={(productoId) => editar(apodo, { productoId })} /></td>
                   <td><SelectorUnidad productoId={a.productoId} valor={a.unidad} onCambiar={(unidad) => editar(apodo, { unidad })} /></td>
                   <td>{a.aprendido ? fecha(a.aprendido) : '-'}</td>
-                  <td><button className="quitar" title="Olvidar apodo" onClick={() => quitar(apodo)}>×</button></td>
+                  <td>{onBorrar && <button className="quitar" title="Olvidar apodo" onClick={() => onBorrar(apodo)}>×</button>}</td>
                 </tr>
               ))}
             </tbody>

@@ -12,8 +12,9 @@ export const sumarDias = (iso, dias) => {
   return d.toISOString()
 }
 
+// Sin numero = presupuesto todavia no guardado (la base asigna el numero al guardar)
 export const numeroComprobante = (puntoVenta, numero) =>
-  `${String(puntoVenta).padStart(4, '0')}-${String(numero).padStart(8, '0')}`
+  numero ? `${String(puntoVenta).padStart(4, '0')}-${String(numero).padStart(8, '0')}` : 'sin guardar'
 
 export const plural = (unidad, cantidad) => (cantidad === 1 ? unidad : `${unidad}s`)
 

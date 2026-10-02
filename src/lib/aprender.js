@@ -1,18 +1,16 @@
 import { extraerApodo } from './interpretar.js'
 
-// Toma las lineas que el usuario corrigio a mano y guarda "como lo escribio el cliente" -> producto.
-// Devuelve los apodos actualizados y cuantos se agregaron o cambiaron.
+// Toma las lineas que el usuario corrigio a mano y arma "como lo escribio el cliente" -> producto.
+// Devuelve solo los apodos nuevos o cambiados: [[apodo, { productoId, unidad, ejemplo, aprendido }], ...]
 export function aprenderDe(lineas, apodos) {
-  const nuevos = { ...apodos }
-  let cambios = 0
+  const cambios = new Map()
   for (const l of lineas) {
     if (!l.corregido || !l.original || !l.productoId) continue
     const apodo = extraerApodo(l.original)
     if (apodo.length < 3) continue
-    const previo = nuevos[apodo]
+    const previo = apodos[apodo]
     if (previo?.productoId === l.productoId && previo?.unidad === l.unidad) continue
-    nuevos[apodo] = { productoId: l.productoId, unidad: l.unidad, ejemplo: l.original, aprendido: new Date().toISOString() }
-    cambios++
+    cambios.set(apodo, { productoId: l.productoId, unidad: l.unidad, ejemplo: l.original, aprendido: new Date().toISOString() })
   }
-  return { apodos: nuevos, cambios }
+  return [...cambios]
 }
