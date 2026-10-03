@@ -22,10 +22,43 @@ export const normalizar = (texto) =>
 const singular = (palabra) => palabra.replace(/s$/, '')
 
 // Divide el mensaje en fragmentos que probablemente contienen un producto cada uno
+const UNIDADES_PEDIDO = /^(caja|bolsa|bolsita|bolson|bolsone|paquete|unidad|unidade|bulto|docena)s?$/
+const UNIDADES_PESO = /^(g|gr|grs|gramo|gramos|kg|kgs|kilo|kilos)$/
+const ES_NUMERO = /^\d+([.,]\d+)?$/
+
+// Una palabra empieza un item nuevo si es una cantidad: "5 cajas", "15 paquetes", "3 almohadas".
+// No cuenta si es una presentacion ("80 g", "1kg") ni el "x 3" de "almohadas x 3 cajas".
+const empiezaItem = (palabras, i) => {
+  const palabra = palabras[i]
+  const siguiente = palabras[i + 1] ?? ''
+  if (palabras[i - 1] === 'x' || UNIDADES_PESO.test(siguiente)) return false
+  if (ES_NUMERO.test(palabra)) return true
+  return Boolean(NUMEROS[palabra]) && UNIDADES_PEDIDO.test(siguiente)
+}
+
+// Corta una frase sin separadores en items, uno por cada cantidad que aparece
+const separarPorCantidades = (frase) => {
+  const palabras = frase.split(' ')
+  const partes = []
+  let actual = []
+  palabras.forEach((palabra, i) => {
+    if (actual.length && empiezaItem(palabras, i)) {
+      partes.push(actual.join(' '))
+      actual = []
+    }
+    actual.push(palabra)
+  })
+  if (actual.length) partes.push(actual.join(' '))
+  return partes
+}
+
+// Separa por renglon, coma (no la decimal de "2,5 kg"), punto y coma, "y", "+" y por cada nueva cantidad.
+// Asi funciona aunque al pegar se pierdan los saltos de linea.
 const fragmentar = (texto) =>
   texto
     .split(/\n/)
-    .flatMap((linea) => normalizar(linea).split(/,|;|\by\b|\+/))
+    .flatMap((linea) => normalizar(linea).split(/(?<!\d),|,(?!\d)|;|\by\b|\+/))
+    .flatMap((frase) => separarPorCantidades(frase.trim()))
     .map((f) => f.trim())
     .filter(Boolean)
 
@@ -93,12 +126,20 @@ const elegirProducto = (familia, fragmento, gramos) => {
   return { producto: mejor.p, seguro, alternativas: candidatos.map((c) => c.id) }
 }
 
-// Para mostrar: saca saludos antes de la cantidad y despedidas al final
+// Lo que suele venir despues del ultimo producto: "avisame cuando lo tengas", "gracias", "abrazo"
+const CIERRE = /(\.(?!\d)|\b(gracias|saludos|abrazo|avisame|avisa|aviso|quedo|espero|coordinamos|cuando lo|cuando tenga)\b).*$/
+
+// Para mostrar y para aprender apodos: saca saludos antes de la cantidad y despedidas al final
 const textoPedido = (fragmento) => {
   const inicio = fragmento.search(/\d/)
   const saludo = inicio > 0 && !detectarFamilia(fragmento.slice(0, inicio))
-  return (saludo ? fragmento.slice(inicio) : fragmento).replace(/\b(gracias|saludos|abrazo)\b.*$/, '').trim()
+  return (saludo ? fragmento.slice(inicio) : fragmento).replace(CIERRE, '').trim()
 }
+
+// Sin producto reconocido, solo se muestra si parece un item ("7 alfajores", "dos cajas de ...").
+// Evita lineas falsas como "hola me pasas precio por un mix de".
+const pareceItem = (fragmento) =>
+  /\d/.test(fragmento) || fragmento.split(' ').some((p) => UNIDADES_PEDIDO.test(p))
 
 const PALABRAS_VACIAS = new Set([
   'de', 'del', 'la', 'las', 'el', 'los', 'un', 'una', 'unos', 'unas', 'x', 'por', 'favor', 'mas', 'con',
@@ -152,8 +193,7 @@ export function interpretarMensaje(texto, apodos = {}) {
     }
     const familia = detectarFamilia(fragmento)
     if (!familia) {
-      // Solo se reporta como "no encontrado" si parece un pedido (tiene cantidad)
-      if (cantidad) lineas.push({ original: textoPedido(fragmento), estado: 'no', cantidad, productoId: null, unidad: 'bolsa', alternativas: [] })
+      if (cantidad && pareceItem(fragmento)) lineas.push({ original: textoPedido(fragmento), estado: 'no', cantidad, productoId: null, unidad: 'bolsa', alternativas: [] })
       continue
     }
     const { producto, seguro, alternativas } = elegirProducto(familia, fragmento, leerPresentacion(fragmento))
