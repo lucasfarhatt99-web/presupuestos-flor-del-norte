@@ -12,13 +12,17 @@ export const sumarDias = (iso, dias) => {
   return d.toISOString()
 }
 
+// Sin numero = presupuesto todavia no guardado (la base asigna el numero al guardar)
 export const numeroComprobante = (puntoVenta, numero) =>
-  `${String(puntoVenta).padStart(4, '0')}-${String(numero).padStart(8, '0')}`
+  numero ? `${String(puntoVenta).padStart(4, '0')}-${String(numero).padStart(8, '0')}` : 'sin guardar'
 
 export const plural = (unidad, cantidad) => (cantidad === 1 ? unidad : `${unidad}s`)
 
-// Calcula importes de un presupuesto a partir de sus lineas
-export function calcular(lineas, lista, descuentoPct) {
+export const ALICUOTAS_IVA = [21, 10.5]
+
+// Importes de un presupuesto. neto = productos con descuento, sin flete ni IVA (es lo que miden los reportes).
+// El IVA, si se agrega, se calcula sobre neto + flete: el flete cobrado por el vendedor integra el precio.
+export function calcular({ lineas, lista, descuentoPct, flete = 0, ivaPct = 0 }) {
   const items = lineas
     .filter((l) => l.productoId)
     .map((l) => {
@@ -28,5 +32,9 @@ export function calcular(lineas, lista, descuentoPct) {
     })
   const subtotal = items.reduce((s, i) => s + i.importe, 0)
   const descuento = (subtotal * (Number(descuentoPct) || 0)) / 100
-  return { items, subtotal, descuento, total: subtotal - descuento }
+  const neto = subtotal - descuento
+  const importeFlete = Number(flete) || 0
+  const sinIva = neto + importeFlete
+  const iva = (sinIva * (Number(ivaPct) || 0)) / 100
+  return { items, subtotal, descuento, neto, flete: importeFlete, sinIva, iva, total: sinIva + iva }
 }
