@@ -221,3 +221,6 @@ label.falta input { border-color: var(--rojo); background: var(--rojo-claro); }
   .hoja { box-shadow: none; max-width: none; width: 210mm; height: 297mm; aspect-ratio: auto; padding: 16mm 15mm; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+.precio-dudoso { color: var(--ambar); font-weight: 600; }
+.catalogo th small { font-weight: 400; text-transform: none; letter-spacing: 0; }

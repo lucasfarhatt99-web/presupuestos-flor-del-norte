@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PRODUCTOS, LISTAS, productoPorId, etiquetaProducto, unidadesDe, precioDe } from '../data/catalogo.js'
+import { PRODUCTOS, LISTAS, productoPorId, etiquetaProducto, unidadesDe, precioDe, avisoCaja } from '../data/catalogo.js'
 import { interpretarMensaje, MENSAJE_EJEMPLO as EJEMPLO } from '../lib/interpretar.js'
 import { calcular, moneda, numeroComprobante, ALICUOTAS_IVA } from '../lib/formato.js'
 import DocumentoPresupuesto from './DocumentoPresupuesto.jsx'
@@ -146,7 +146,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
                             {resto.map((p) => <option key={p.id} value={p.id}>{etiquetaProducto(p)}</option>)}
                           </optgroup>
                         </select>
-                        {producto?.aviso && lista === 'mayorista' && l.unidad === 'caja' && <small className="motivo">{producto.aviso}</small>}
+                        {l.unidad === 'caja' && avisoCaja(producto, lista) && <small className="motivo">{avisoCaja(producto, lista)}</small>}
                       </td>
                       <td className="num">{producto ? moneda(precio) : '-'}</td>
                       <td className="num">{producto ? moneda(precio * l.cantidad) : '-'}</td>

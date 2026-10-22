@@ -1,5 +1,8 @@
-import { PRODUCTOS, CONDICIONES, FAMILIAS, VIGENCIA_LISTAS, SABORES_ALMOHADAS } from '../data/catalogo.js'
+import { PRODUCTOS, LISTAS, CONDICIONES, FAMILIAS, VIGENCIA_LISTAS, SABORES_ALMOHADAS, avisoCaja } from '../data/catalogo.js'
 import { moneda } from '../lib/formato.js'
+
+const listas = Object.values(LISTAS)
+const corto = (lista) => lista.nombre.replace('Lista ', '')
 
 export default function Catalogo() {
   const paquetes = PRODUCTOS.filter((p) => p.tipo === 'paquete')
@@ -13,18 +16,27 @@ export default function Catalogo() {
       <div className="tabla-scroll">
         <table>
           <thead>
-            <tr><th>Producto</th><th>Bolsa</th><th className="num">Bolsas/caja</th><th className="num">Bultos/palet</th>
-              <th className="num">Premium bolsa</th><th className="num">Premium caja</th><th className="num">Mayorista bolsa</th><th className="num">Mayorista caja</th></tr>
+            <tr>
+              <th>Producto</th><th>Bolsa</th><th className="num">Bolsas/caja</th><th className="num">Bultos/palet</th>
+              {listas.map((l) => (
+                <th key={l.id} className="num" colSpan={2}>{corto(l)}<br /><small>bolsa · caja</small></th>
+              ))}
+            </tr>
           </thead>
           <tbody>
-            {paquetes.map((p) => (
-              <tr key={p.id}>
-                <td>{p.nombre}{p.aviso && <small className="motivo">{p.aviso}</small>}</td><td>{p.presentacion}</td>
-                <td className="num">{p.bolsasPorCaja}</td><td className="num">{p.bultosPorPalet}</td>
-                <td className="num">{moneda(p.precios.premium.bolsa)}</td><td className="num">{moneda(p.precios.premium.caja)}</td>
-                <td className="num">{moneda(p.precios.mayorista.bolsa)}</td><td className="num">{moneda(p.precios.mayorista.caja)}</td>
-              </tr>
-            ))}
+            {paquetes.map((p) => {
+              const avisos = listas.map((l) => avisoCaja(p, l.id)).filter(Boolean)
+              return (
+                <tr key={p.id}>
+                  <td>{p.nombre}{avisos.map((a) => <small key={a} className="motivo">{a}</small>)}</td>
+                  <td>{p.presentacion}</td>
+                  <td className="num">{p.bolsasPorCaja}</td><td className="num">{p.bultosPorPalet}</td>
+                  {listas.map((l) => (
+                    <PreciosPaquete key={l.id} precios={p.precios[l.id]} conAviso={Boolean(avisoCaja(p, l.id))} />
+                  ))}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -32,12 +44,17 @@ export default function Catalogo() {
       <h2>Granel</h2>
       <div className="tabla-scroll">
         <table>
-          <thead><tr><th>Producto</th><th>Bolsa</th><th className="num">Bolsas/palet</th><th className="num">Premium</th><th className="num">Mayorista</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Producto</th><th>Bolsa</th><th className="num">Bolsas/palet</th>
+              {listas.map((l) => <th key={l.id} className="num">{corto(l)}</th>)}
+            </tr>
+          </thead>
           <tbody>
             {granel.map((p) => (
               <tr key={p.id}>
                 <td>{p.nombre}</td><td>{p.presentacion}</td><td className="num">{p.bolsasPorPalet}</td>
-                <td className="num">{moneda(p.precios.premium.bolsa)}</td><td className="num">{moneda(p.precios.mayorista.bolsa)}</td>
+                {listas.map((l) => <td key={l.id} className="num">{moneda(p.precios[l.id].bolsa)}</td>)}
               </tr>
             ))}
           </tbody>
@@ -47,10 +64,13 @@ export default function Catalogo() {
       <h2>Condiciones de cada lista</h2>
       <div className="tabla-scroll">
         <table>
-          <thead><tr><th>Familia</th><th>Premium</th><th>Mayorista</th></tr></thead>
+          <thead><tr><th>Familia</th>{listas.map((l) => <th key={l.id}>{corto(l)}</th>)}</tr></thead>
           <tbody>
             {Object.keys(CONDICIONES.premium).map((f) => (
-              <tr key={f}><td>{FAMILIAS[f]}</td><td>{CONDICIONES.premium[f]}</td><td>{CONDICIONES.mayorista[f]}</td></tr>
+              <tr key={f}>
+                <td>{FAMILIAS[f]}</td>
+                {listas.map((l) => <td key={l.id}>{CONDICIONES[l.id][f]}</td>)}
+              </tr>
             ))}
           </tbody>
         </table>
@@ -58,3 +78,10 @@ export default function Catalogo() {
     </section>
   )
 }
+
+const PreciosPaquete = ({ precios, conAviso }) => (
+  <>
+    <td className="num">{moneda(precios.bolsa)}</td>
+    <td className={`num ${conAviso ? 'precio-dudoso' : ''}`}>{moneda(precios.caja)}</td>
+  </>
+)
