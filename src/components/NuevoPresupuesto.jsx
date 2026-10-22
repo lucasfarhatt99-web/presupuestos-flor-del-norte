@@ -146,7 +146,6 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
                             {resto.map((p) => <option key={p.id} value={p.id}>{etiquetaProducto(p)}</option>)}
                           </optgroup>
                         </select>
-                        {producto?.aviso && lista === 'mayorista' && l.unidad === 'caja' && <small className="motivo">{producto.aviso}</small>}
                       </td>
                       <td className="num">{producto ? moneda(precio) : '-'}</td>
                       <td className="num">{producto ? moneda(precio * l.cantidad) : '-'}</td>

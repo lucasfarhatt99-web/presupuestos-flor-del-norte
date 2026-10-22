@@ -79,7 +79,7 @@ create table public.presupuestos (
   actualizado timestamptz not null default now(),
   vendedor_id uuid not null default auth.uid() references public.perfiles(id),
   estado text not null default 'Pendiente' check (estado in ('Pendiente', 'Aceptado', 'Rechazado', 'Vencido')),
-  lista text not null check (lista in ('premium', 'mayorista')),
+  lista text not null check (lista in ('premium', 'mayorista', 'trade')),
   descuento_pct numeric not null default 0,
   cliente jsonb not null default '{}'::jsonb,
   lineas jsonb not null default '[]'::jsonb,
