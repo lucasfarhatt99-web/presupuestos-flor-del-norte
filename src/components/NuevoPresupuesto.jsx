@@ -95,7 +95,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
           </label>
           <label>CUIT (opcional)<input value={cliente.cuit} onChange={(e) => actualizar({ cliente: { ...cliente, cuit: e.target.value } })} placeholder="Opcional" /></label>
           <label>WhatsApp (opcional)<input value={cliente.telefono} onChange={(e) => actualizar({ cliente: { ...cliente, telefono: e.target.value } })} placeholder="381..." /></label>
-          <label>Lista
+          <label className="campo-lista">Lista
             <div className="segmentado">
               {Object.values(LISTAS).map((l) => (
                 <button key={l.id} className={lista === l.id ? 'activo' : ''} onClick={() => actualizar({ lista: l.id })}>{l.nombre.replace('Lista ', '')}</button>
