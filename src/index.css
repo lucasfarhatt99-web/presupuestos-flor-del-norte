@@ -82,7 +82,11 @@ textarea:focus, input:focus, select:focus { outline: 2px solid var(--verde-claro
 label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--suave); font-weight: 500; }
 label input, label select, label .segmentado { color: var(--texto); font-size: 14px; font-weight: 400; }
 .segmentado { display: flex; border: 1px solid var(--borde); border-radius: 8px; overflow: hidden; }
-.segmentado button { flex: 1; border: 0; background: var(--blanco); padding: 8px 6px; }
+.segmentado button { flex: 1 1 0; min-width: 0; border: 0; background: var(--blanco); padding: 8px 6px; white-space: nowrap; }
+.segmentado button + button { border-left: 1px solid var(--borde); }
+/* El selector de lista necesita lugar para tres botones */
+.campo-lista { grid-column: span 2; }
+@media (max-width: 560px) { .campo-lista { grid-column: 1 / -1; } }
 .segmentado button.activo { background: var(--verde); color: #fff; font-weight: 600; }
 
 .tabla-scroll { overflow-x: auto; }
