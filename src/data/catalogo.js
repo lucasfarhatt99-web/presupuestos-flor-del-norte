@@ -1,6 +1,6 @@
 // Fuente: "LPD OCTUBRE 26' - PREMIUM.pdf", "- MAYORISTA.pdf" y "- TRADE.pdf"
-// Paquetes: precio por bolsa y por caja. Granel: solo precio por bolsa.
-// Los precios de cada producto van en el orden de LISTAS: [premium, mayorista, trade].
+// Se carga solo el precio por bolsa, en el orden de LISTAS: [premium, mayorista, trade].
+// La caja es siempre bolsa x bolsas por caja: los precios de caja de las listas impresas estan redondeados y no se usan.
 
 export const VIGENCIA_LISTAS = 'Octubre 2026'
 
@@ -14,10 +14,10 @@ export const LISTAS = {
 const IDS_LISTAS = Object.keys(LISTAS)
 
 // familia: agrupa productos para interpretar mensajes ("tutucas" -> maiz)
-// precios: un [bolsa, caja] por lista
+// precios: un precio por bolsa por lista; la caja se calcula
 const paquete = (id, nombre, familia, presentacion, bolsasPorCaja, bultosPorPalet, precios, extra = {}) => ({
   id, nombre, familia, presentacion, tipo: 'paquete', bolsasPorCaja, bultosPorPalet,
-  precios: Object.fromEntries(IDS_LISTAS.map((lista, i) => [lista, { bolsa: precios[i][0], caja: precios[i][1] }])),
+  precios: Object.fromEntries(IDS_LISTAS.map((lista, i) => [lista, { bolsa: precios[i], caja: precios[i] * bolsasPorCaja }])),
   ...extra,
 })
 
@@ -29,17 +29,16 @@ const granel = (id, nombre, familia, presentacion, bolsasPorPalet, precios, extr
 })
 
 export const PRODUCTOS = [
-  paquete('mi-sd-80', 'Maíz Inflado Super Dulce', 'maiz', '80 g', 36, 50, [[540, 19440], [621, 22356], [729, 26244]], { porDefecto: true }),
-  paquete('mi-sd-30', 'Maíz Inflado Super Dulce', 'maiz', '30 g', 24, 150, [[273, 6552], [314, 7536], [369, 8856]]),
-  paquete('mi-sd-cap-8', 'Maíz Inflado Super Dulce Capibara', 'maiz', '8 g', 100, 150, [[55, 5500], [63, 6300], [74, 7400]], { claves: ['capibara'] }),
-  paquete('mi-st-80', 'Maíz Inflado con Stevia', 'maiz', '80 g', 36, 50, [[624, 22464], [718, 25848], [842, 30312]], { claves: ['stevia'] }),
-  paquete('av-inst-400', 'Avena Instantánea', 'avena', '400 g', 12, 150, [[1089, 13068], [1307, 15684], [1470, 17640]], { porDefecto: true }),
-  // La caja de Mayorista y Trade no coincide con bolsa x 300 en las listas; se respeta la lista y la app lo avisa
-  paquete('copos-20', 'Copos de Maíz', 'copos', '20 g', 300, 30, [[211, 63300], [221, 69600], [261, 82200]], { porDefecto: true }),
-  paquete('trigo-sd-50', 'Trigo Inflado Super Dulce', 'trigo', '50 g', 24, 50, [[563, 13512], [647, 15528], [760, 18240]], { porDefecto: true }),
-  paquete('tost-120', 'Tostadas de Arroz', 'tostadas', '120 g', 18, 50, [[792, 14256], [911, 16398], [1069, 19242]], { porDefecto: true }),
-  paquete('alm-180', 'Almohadas', 'almohadas', '180 g', 40, 50, [[1329, 53160], [1462, 58480], [1728, 69120]], { porDefecto: true }),
-  paquete('alm-50', 'Almohadas', 'almohadas', '50 g', 36, 150, [[494, 17784], [543, 19548], [642, 23112]]),
+  paquete('mi-sd-80', 'Maíz Inflado Super Dulce', 'maiz', '80 g', 36, 50, [540, 621, 729], { porDefecto: true }),
+  paquete('mi-sd-30', 'Maíz Inflado Super Dulce', 'maiz', '30 g', 24, 150, [273, 314, 369]),
+  paquete('mi-sd-cap-8', 'Maíz Inflado Super Dulce Capibara', 'maiz', '8 g', 100, 150, [55, 63, 74], { claves: ['capibara'] }),
+  paquete('mi-st-80', 'Maíz Inflado con Stevia', 'maiz', '80 g', 36, 50, [624, 718, 842], { claves: ['stevia'] }),
+  paquete('av-inst-400', 'Avena Instantánea', 'avena', '400 g', 12, 150, [1089, 1307, 1470], { porDefecto: true }),
+  paquete('copos-20', 'Copos de Maíz', 'copos', '20 g', 300, 30, [211, 221, 261], { porDefecto: true }),
+  paquete('trigo-sd-50', 'Trigo Inflado Super Dulce', 'trigo', '50 g', 24, 50, [563, 647, 760], { porDefecto: true }),
+  paquete('tost-120', 'Tostadas de Arroz', 'tostadas', '120 g', 18, 50, [792, 911, 1069], { porDefecto: true }),
+  paquete('alm-180', 'Almohadas', 'almohadas', '180 g', 40, 50, [1329, 1462, 1728], { porDefecto: true }),
+  paquete('alm-50', 'Almohadas', 'almohadas', '50 g', 36, 150, [494, 543, 642]),
 
   granel('mi-sd-5k', 'Maíz Inflado Super Dulce', 'maiz', '5 kg', 50, [16000, 18500, 21500]),
   granel('mi-sd-1k', 'Maíz Inflado Super Dulce', 'maiz', '1 kg', 150, [3200, 3700, 4300]),
@@ -116,15 +115,5 @@ export const productoPorId = (id) => PRODUCTOS.find((p) => p.id === id)
 export const etiquetaProducto = (p) => `${p.nombre} ${p.presentacion}`
 
 export const unidadesDe = (p) => (p.tipo === 'paquete' ? ['caja', 'bolsa'] : ['bolsa'])
-
-// Si la lista trae un precio de caja distinto de bolsa x bolsas por caja, devuelve el aviso
-export const avisoCaja = (p, lista) => {
-  const precios = p?.precios[lista]
-  if (!precios?.caja) return ''
-  const calculado = precios.bolsa * p.bolsasPorCaja
-  if (calculado === precios.caja) return ''
-  const pesos = (n) => `$${n.toLocaleString('es-AR')}`
-  return `En la ${LISTAS[lista].nombre} la caja figura a ${pesos(precios.caja)}, pero ${p.bolsasPorCaja} x ${pesos(precios.bolsa)} da ${pesos(calculado)}.`
-}
 
 export const precioDe = (p, lista, unidad) => p?.precios[lista]?.[unidad] ?? 0

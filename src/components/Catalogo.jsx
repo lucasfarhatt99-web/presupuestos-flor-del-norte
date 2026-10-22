@@ -1,4 +1,4 @@
-import { PRODUCTOS, LISTAS, CONDICIONES, FAMILIAS, VIGENCIA_LISTAS, SABORES_ALMOHADAS, avisoCaja } from '../data/catalogo.js'
+import { PRODUCTOS, LISTAS, CONDICIONES, FAMILIAS, VIGENCIA_LISTAS, SABORES_ALMOHADAS } from '../data/catalogo.js'
 import { moneda } from '../lib/formato.js'
 
 const listas = Object.values(LISTAS)
@@ -10,7 +10,7 @@ export default function Catalogo() {
 
   return (
     <section className="panel catalogo">
-      <p className="nota">Listas de precios vigentes: {VIGENCIA_LISTAS}. Sabores de almohadas en paquete: {SABORES_ALMOHADAS.join(', ')}.</p>
+      <p className="nota">Listas de precios vigentes: {VIGENCIA_LISTAS}. El precio por caja es el precio por bolsa por la cantidad de bolsas de la caja. Sabores de almohadas en paquete: {SABORES_ALMOHADAS.join(', ')}.</p>
 
       <h2>Paquetes</h2>
       <div className="tabla-scroll">
@@ -24,19 +24,14 @@ export default function Catalogo() {
             </tr>
           </thead>
           <tbody>
-            {paquetes.map((p) => {
-              const avisos = listas.map((l) => avisoCaja(p, l.id)).filter(Boolean)
-              return (
-                <tr key={p.id}>
-                  <td>{p.nombre}{avisos.map((a) => <small key={a} className="motivo">{a}</small>)}</td>
-                  <td>{p.presentacion}</td>
-                  <td className="num">{p.bolsasPorCaja}</td><td className="num">{p.bultosPorPalet}</td>
-                  {listas.map((l) => (
-                    <PreciosPaquete key={l.id} precios={p.precios[l.id]} conAviso={Boolean(avisoCaja(p, l.id))} />
-                  ))}
-                </tr>
-              )
-            })}
+            {paquetes.map((p) => (
+              <tr key={p.id}>
+                <td>{p.nombre}</td>
+                <td>{p.presentacion}</td>
+                <td className="num">{p.bolsasPorCaja}</td><td className="num">{p.bultosPorPalet}</td>
+                {listas.map((l) => <PreciosPaquete key={l.id} precios={p.precios[l.id]} />)}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -79,9 +74,9 @@ export default function Catalogo() {
   )
 }
 
-const PreciosPaquete = ({ precios, conAviso }) => (
+const PreciosPaquete = ({ precios }) => (
   <>
     <td className="num">{moneda(precios.bolsa)}</td>
-    <td className={`num ${conAviso ? 'precio-dudoso' : ''}`}>{moneda(precios.caja)}</td>
+    <td className="num">{moneda(precios.caja)}</td>
   </>
 )
