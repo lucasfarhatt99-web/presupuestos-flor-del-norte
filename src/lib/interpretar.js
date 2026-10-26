@@ -1,6 +1,6 @@
 // Interpreta un mensaje de WhatsApp y lo convierte en lineas de presupuesto.
 // Funciona por reglas: alias de cada familia mas los apodos que la app aprende de las correcciones.
-import { PRODUCTOS, ALIAS_FAMILIA } from '../data/catalogo.js'
+import { PRODUCTOS, ALIAS_FAMILIA, SABORES_ALMOHADAS } from '../data/catalogo.js'
 
 export const MENSAJE_EJEMPLO = 'Hola! me pasás precio por un mix de 4 almohaditas, 20 tutucas y 15 tostadas de arroz? Gracias'
 
@@ -32,6 +32,8 @@ const empiezaItem = (palabras, i) => {
   const palabra = palabras[i]
   const siguiente = palabras[i + 1] ?? ''
   if (palabras[i - 1] === 'x' || UNIDADES_PESO.test(siguiente)) return false
+  // "caja de 36 bolsas": es el contenido de la caja, no un item nuevo
+  if (/^cajas?$/.test(palabras[i - 2] ?? '') && /^(de|con|por)$/.test(palabras[i - 1] ?? '')) return false
   if (ES_NUMERO.test(palabra)) return true
   return Boolean(NUMEROS[palabra]) && UNIDADES_PEDIDO.test(siguiente)
 }
@@ -62,12 +64,26 @@ const fragmentar = (texto) =>
     .map((f) => f.trim())
     .filter(Boolean)
 
-const leerCantidad = (fragmento) => {
-  const media = /media docena/.test(fragmento)
-  if (media) return 6
-  const conX = fragmento.match(/x\s*(\d+)/)
+// "caja x 40 bolsas", "caja de 40 bolsas", "caja con 40 u": describe lo que trae la caja, no es la cantidad pedida
+const CONTENIDO_CAJA = /\bcajas?\s*(?:x|de|con|por)\s*(\d+)\s*(?:bolsas?|bolsitas?|paquetes?|unidades?|u\b|un\b)/
+
+export const leerContenidoCaja = (fragmento) => {
+  const m = fragmento.match(CONTENIDO_CAJA)
+  return m ? Number(m[1]) : null
+}
+
+const sinContenidoCaja = (fragmento) => fragmento.replace(new RegExp(CONTENIDO_CAJA, 'g'), ' ').replace(/\s+/g, ' ').trim()
+
+// Orden de prioridad: el numero con que arranca el item ("1 caja ..."), despues el "x 3" ("almohadas x 3"),
+// despues el primer numero suelto. Nunca el contenido de la caja ni una presentacion (80 g, 5 kg).
+const leerCantidad = (fragmentoOriginal) => {
+  if (/media docena/.test(fragmentoOriginal)) return 6
+  const fragmento = sinContenidoCaja(fragmentoOriginal)
+  const primera = fragmento.split(' ')[0]
+  if (ES_NUMERO.test(primera) && !UNIDADES_PESO.test(fragmento.split(' ')[1] ?? '')) return Number(primera.replace(',', '.'))
+  if (NUMEROS[primera] && UNIDADES_PEDIDO.test(fragmento.split(' ')[1] ?? '')) return NUMEROS[primera]
+  const conX = fragmento.match(/(?:^|\s)x\s*(\d+)/)
   if (conX) return Number(conX[1])
-  // Primer numero que no sea parte de una presentacion (80 g, 5 kg)
   const numeros = [...fragmento.matchAll(/(\d+(?:[.,]\d+)?)(\s*(?:g|gr|grs|kg|kilo|kilos)\b)?/g)]
   const suelto = numeros.find((m) => !m[2])
   if (suelto) return Number(suelto[1].replace(',', '.'))
@@ -89,11 +105,25 @@ const gramosDe = (presentacion) => {
   return m[2] === 'kg' ? valor * 1000 : valor
 }
 
-const leerUnidad = (fragmento) => {
-  if (/\bcaja/.test(fragmento)) return 'caja'
-  if (/\b(bolsa|bolsita|bolson|paquete|unidad)/.test(fragmento)) return 'bolsa'
+const unidadDePalabra = (palabra = '') => {
+  if (/^caja/.test(palabra)) return 'caja'
+  if (/^(bolsa|bolsita|bolson|paquete|unidad)/.test(palabra)) return 'bolsa'
   return null
 }
+
+// La unidad que acompaña a la cantidad manda ("1 caja ..."); si no, la primera que aparezca.
+// El contenido de la caja ("x 40 bolsas") no cuenta.
+const leerUnidad = (fragmentoOriginal) => {
+  const palabras = sinContenidoCaja(fragmentoOriginal).split(' ')
+  const pegada = unidadDePalabra(palabras[1])
+  if (pegada && (ES_NUMERO.test(palabras[0]) || NUMEROS[palabras[0]])) return pegada
+  for (const p of palabras) if (unidadDePalabra(p)) return unidadDePalabra(p)
+  return null
+}
+
+// Sabores de las almohadas en paquete (en granel cada sabor es un producto aparte)
+const leerSabor = (fragmento) =>
+  SABORES_ALMOHADAS.find((s) => fragmento.includes(normalizar(s))) ?? null
 
 // Gana el alias mas largo encontrado ("copos de maiz" es copos, no maiz)
 const detectarFamilia = (fragmento) => {
@@ -108,14 +138,18 @@ const detectarFamilia = (fragmento) => {
   return mejor?.familia ?? null
 }
 
-// Puntua cada producto de la familia segun presentacion y palabras clave del fragmento
-const elegirProducto = (familia, fragmento, gramos) => {
+// Puntua cada producto de la familia segun presentacion y palabras clave del fragmento.
+// Si piden caja, el granel (que se vende por bolsa) queda descartado salvo que el gramaje o una clave lo nombren.
+const elegirProducto = (familia, fragmento, gramos, unidadPedida) => {
   const candidatos = PRODUCTOS.filter((p) => p.familia === familia)
   const puntuados = candidatos.map((p) => {
     let puntos = 0
-    if (gramos && gramosDe(p.presentacion) === gramos) puntos += 10
-    for (const clave of p.claves ?? []) if (fragmento.includes(clave)) puntos += 8
+    const mismoGramaje = gramos && gramosDe(p.presentacion) === gramos
+    const conClave = (p.claves ?? []).some((clave) => fragmento.includes(clave))
+    if (mismoGramaje) puntos += 10
+    if (conClave) puntos += 8
     if (/granel|kilo|kg/.test(fragmento) && p.tipo === 'granel') puntos += 3
+    if (unidadPedida === 'caja' && p.tipo === 'granel' && !mismoGramaje && !(conClave && /caja/.test(p.nombre.toLowerCase()))) puntos -= 20
     if (p.porDefecto) puntos += 1
     return { p, puntos }
   })
@@ -132,7 +166,8 @@ const CIERRE = /(\.(?!\d)|\b(gracias|saludos|abrazo|avisame|avisa|aviso|quedo|es
 // Para mostrar y para aprender apodos: saca saludos antes de la cantidad y despedidas al final
 const textoPedido = (fragmento) => {
   const inicio = fragmento.search(/\d/)
-  const saludo = inicio > 0 && !detectarFamilia(fragmento.slice(0, inicio))
+  const previo = fragmento.slice(0, inicio).trim()
+  const saludo = inicio > 0 && previo.length > 1 && !detectarFamilia(previo)
   return (saludo ? fragmento.slice(inicio) : fragmento).replace(CIERRE, '').trim()
 }
 
@@ -169,17 +204,36 @@ const buscarApodo = (fragmento, apodos) => {
   return mejor
 }
 
+// Un apodo aprendido no vale si el mensaje lo contradice: otro gramaje escrito, o caja para un producto de granel
+const apodoContradicho = (producto, fragmento, gramos, unidadPedida) =>
+  (gramos && gramosDe(producto.presentacion) !== gramos) || (unidadPedida === 'caja' && producto.tipo === 'granel')
+
+// Controles comunes a toda linea con producto: sabor de almohadas en paquete y contenido de caja vs catalogo
+const completarLinea = (linea, producto, fragmento) => {
+  const motivos = linea.motivo ? [linea.motivo] : []
+  let estado = linea.estado
+  const sabor = producto.familia === 'almohadas' && producto.tipo === 'paquete' ? leerSabor(fragmento) : null
+  const contenido = leerContenidoCaja(fragmento)
+  if (contenido && producto.tipo === 'paquete' && contenido !== producto.bolsasPorCaja) {
+    estado = 'duda'
+    motivos.push(`el mensaje dice caja x ${contenido} y en catálogo es x ${producto.bolsasPorCaja}`)
+  }
+  return { ...linea, estado, sabor, motivo: motivos.join(', ') }
+}
+
 // apodos: { "palito salado": { productoId, unidad } } aprendidos de correcciones anteriores
 export function interpretarMensaje(texto, apodos = {}) {
   const lineas = []
   for (const fragmento of fragmentar(texto)) {
     const cantidad = leerCantidad(fragmento)
+    const unidadPedida = leerUnidad(fragmento)
+    const gramos = leerPresentacion(fragmento)
     const aprendido = buscarApodo(fragmento, apodos)
     const productoAprendido = aprendido && PRODUCTOS.find((p) => p.id === aprendido.productoId)
-    if (productoAprendido) {
+    if (productoAprendido && !apodoContradicho(productoAprendido, fragmento, gramos, unidadPedida)) {
       const producto = productoAprendido
-      const unidad = producto.tipo === 'granel' ? 'bolsa' : leerUnidad(fragmento) ?? aprendido.unidad ?? 'caja'
-      lineas.push({
+      const unidad = producto.tipo === 'granel' ? 'bolsa' : unidadPedida ?? aprendido.unidad ?? 'caja'
+      lineas.push(completarLinea({
         original: textoPedido(fragmento),
         estado: cantidad ? 'ok' : 'duda',
         aprendido: aprendido.apodo,
@@ -188,7 +242,7 @@ export function interpretarMensaje(texto, apodos = {}) {
         unidad,
         alternativas: PRODUCTOS.filter((p) => p.familia === producto.familia).map((p) => p.id),
         motivo: cantidad ? '' : 'cantidad no indicada',
-      })
+      }, producto, fragmento))
       continue
     }
     const familia = detectarFamilia(fragmento)
@@ -196,10 +250,9 @@ export function interpretarMensaje(texto, apodos = {}) {
       if (cantidad && pareceItem(fragmento)) lineas.push({ original: textoPedido(fragmento), estado: 'no', cantidad, productoId: null, unidad: 'bolsa', alternativas: [] })
       continue
     }
-    const { producto, seguro, alternativas } = elegirProducto(familia, fragmento, leerPresentacion(fragmento))
-    const unidadPedida = leerUnidad(fragmento)
+    const { producto, seguro, alternativas } = elegirProducto(familia, fragmento, gramos, unidadPedida)
     const unidad = producto.tipo === 'granel' ? 'bolsa' : unidadPedida ?? 'caja'
-    lineas.push({
+    lineas.push(completarLinea({
       original: textoPedido(fragmento),
       estado: seguro && cantidad && (producto.tipo === 'granel' || unidadPedida) ? 'ok' : 'duda',
       cantidad: cantidad ?? 1,
@@ -211,7 +264,7 @@ export function interpretarMensaje(texto, apodos = {}) {
         !cantidad && 'cantidad no indicada',
         !unidadPedida && producto.tipo === 'paquete' && 'se asumió caja',
       ].filter(Boolean).join(', '),
-    })
+    }, producto, fragmento))
   }
   return lineas
 }
