@@ -98,6 +98,8 @@ td { padding: 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
 .tabla-revision select { min-width: 190px; }
 .tabla-revision td:nth-child(4) select { min-width: 110px; }
 .cantidad { width: 72px; }
+.tabla-revision select.sabor { display: block; margin-top: 6px; min-width: 190px; font-size: 13px; }
+.sabor-linea { font-weight: 500; }
 .original { color: var(--suave); font-style: italic; max-width: 140px; }
 .estado { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
 .estado.ok { background: var(--verde-claro); color: var(--verde-osc); }

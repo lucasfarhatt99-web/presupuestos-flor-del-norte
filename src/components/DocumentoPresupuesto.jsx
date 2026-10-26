@@ -1,4 +1,4 @@
-import { LISTAS, CONDICIONES, FAMILIAS, VIGENCIA_LISTAS } from '../data/catalogo.js'
+import { LISTAS, CONDICIONES, FAMILIAS, VIGENCIA_LISTAS, tieneSabores } from '../data/catalogo.js'
 import { calcular, moneda, fecha, sumarDias, numeroComprobante, plural } from '../lib/formato.js'
 
 // Hoja A4 del presupuesto. Se imprime / guarda como PDF con window.print().
@@ -56,7 +56,10 @@ export default function DocumentoPresupuesto({ presupuesto, empresa }) {
                 {plural(i.unidad, i.cantidad)}
                 {i.unidad === 'caja' && <small> x{i.producto.bolsasPorCaja}</small>}
               </td>
-              <td>{i.producto.nombre} <span className="presentacion">{i.producto.presentacion}</span></td>
+              <td>
+                {i.producto.nombre} <span className="presentacion">{i.producto.presentacion}</span>
+                {tieneSabores(i.producto) && i.sabor && <span className="sabor-linea"> · {i.sabor}</span>}
+              </td>
               <td className="num">{moneda(i.precio)}</td>
               <td className="num">{moneda(i.importe)}</td>
             </tr>

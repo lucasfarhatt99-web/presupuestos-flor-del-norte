@@ -114,6 +114,12 @@ export const productoPorId = (id) => PRODUCTOS.find((p) => p.id === id)
 
 export const etiquetaProducto = (p) => `${p.nombre} ${p.presentacion}`
 
+// Las almohadas en paquete se piden por sabor; el precio es el mismo para todos
+export const tieneSabores = (p) => p?.familia === 'almohadas' && p?.tipo === 'paquete'
+
+// Nombre para mostrar en presupuesto y WhatsApp, con el sabor si corresponde
+export const etiquetaLinea = (p, sabor) => (tieneSabores(p) && sabor ? `${etiquetaProducto(p)} · ${sabor}` : etiquetaProducto(p))
+
 export const unidadesDe = (p) => (p.tipo === 'paquete' ? ['caja', 'bolsa'] : ['bolsa'])
 
 export const precioDe = (p, lista, unidad) => p?.precios[lista]?.[unidad] ?? 0

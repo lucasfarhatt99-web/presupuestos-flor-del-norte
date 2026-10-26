@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PRODUCTOS, LISTAS, productoPorId, etiquetaProducto, unidadesDe, precioDe } from '../data/catalogo.js'
+import { PRODUCTOS, LISTAS, SABORES_ALMOHADAS, productoPorId, etiquetaProducto, etiquetaLinea, tieneSabores, unidadesDe, precioDe } from '../data/catalogo.js'
 import { interpretarMensaje, MENSAJE_EJEMPLO as EJEMPLO } from '../lib/interpretar.js'
 import { calcular, moneda, numeroComprobante, ALICUOTAS_IVA } from '../lib/formato.js'
 import DocumentoPresupuesto from './DocumentoPresupuesto.jsx'
@@ -51,7 +51,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
     const guardado = await guardarPrimero()
     if (!guardado) return ventana?.close()
     const { items, flete, total } = importes
-    const detalle = items.map((i) => `- ${i.cantidad} ${i.unidad}${i.cantidad === 1 ? '' : 's'} ${etiquetaProducto(i.producto)}: ${moneda(i.importe)}`).join('\n')
+    const detalle = items.map((i) => `- ${i.cantidad} ${i.unidad}${i.cantidad === 1 ? '' : 's'} ${etiquetaLinea(i.producto, i.sabor)}: ${moneda(i.importe)}`).join('\n')
     const lineaFlete = flete ? `\nFlete: ${moneda(flete)}` : ''
     const texto = `*Presupuesto Flor del Norte N° ${numeroComprobante(empresa.puntoVenta, guardado.numero)}*\n${detalle}${lineaFlete}\n*Total ${conIva ? 'con IVA' : 'sin IVA'}: ${moneda(total)}*\nTe adjunto el PDF con el detalle.`
     const url = `https://wa.me/${(cliente.telefono || '').replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`
@@ -146,6 +146,12 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
                             {resto.map((p) => <option key={p.id} value={p.id}>{etiquetaProducto(p)}</option>)}
                           </optgroup>
                         </select>
+                        {tieneSabores(producto) && (
+                          <select className="sabor" value={l.sabor ?? ''} onChange={(e) => actualizarLinea(n, { sabor: e.target.value || null })}>
+                            <option value="">Sabor sin indicar</option>
+                            {SABORES_ALMOHADAS.map((s) => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        )}
                       </td>
                       <td className="num">{producto ? moneda(precio) : '-'}</td>
                       <td className="num">{producto ? moneda(precio * l.cantidad) : '-'}</td>
