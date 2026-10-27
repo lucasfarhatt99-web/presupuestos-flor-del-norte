@@ -7,38 +7,26 @@ export const RELEVAMIENTO = '21/10/2026'
 export const NOTAS_ENVIO = [
   "Origen: Yerba Buena (YBL). Cada bulto: 1 kg y 10 × 10 × 10 cm. Precios finales en ARS.",
   "Incluyen seguro por guía ($3.811,50, valor declarado $90.000) y transportación. Sin retiro ni entrega a domicilio.",
-  "Relevamiento: 21/10/2026. Descuentos solo sobre flete. 10% + 20% sucesivos equivalen al 28%."
+  "Relevamiento: 21/10/2026. Descuentos solo sobre flete. 10% + 20% sucesivos equivalen al 28%.",
+  "15 cajas = un envío de 10 + uno de 5, los dos con el descuento combinado 10% + 20%."
 ]
 
-// Las 4 opciones que trae el Excel. Orden en que se muestran.
+const redondear = (n) => Math.round(n * 100) / 100
+
+// Lo que se muestra por destino. Las dos columnas "10% + 20%" del Excel no son opciones sueltas:
+// son las dos partes de un envio de 15 cajas (10 + 5), que reciben el descuento combinado.
 export const OPCIONES_ENVIO = [
+  { id: '5', nombre: '5 cajas', detalle: () => '10% de descuento', precio: (t) => t['5-10'] },
+  { id: '10', nombre: '10 cajas', detalle: () => '20% de descuento', precio: (t) => t['10-20'] },
   {
-    "id": "5-10",
-    "bultos": 5,
-    "descuento": "10%",
-    "nombre": "5 bultos · 10% desc."
+    id: '15',
+    nombre: '15 cajas',
+    detalle: (t, pesos) => `10 cajas ${pesos(t['10-10y20'])} + 5 cajas ${pesos(t['5-10y20'])}, con 10% + 20%`,
+    precio: (t) => redondear(t['10-10y20'] + t['5-10y20']),
   },
-  {
-    "id": "10-20",
-    "bultos": 10,
-    "descuento": "20%",
-    "nombre": "10 bultos · 20% desc."
-  },
-  {
-    "id": "10-10y20",
-    "bultos": 10,
-    "descuento": "10% + 20%",
-    "nombre": "10 bultos · 10% + 20%"
-  },
-  {
-    "id": "5-10y20",
-    "bultos": 5,
-    "descuento": "10% + 20%",
-    "nombre": "5 bultos · 10% + 20%"
-  }
 ]
 
-// Precio final (flete con descuento + seguro + transportacion) por tarifa y opcion, en ARS
+// Precio final (flete con descuento + seguro + transportacion) por tarifa y columna del Excel, en ARS
 export const TARIFAS_ENVIO = {
   "A": {
     "5-10": 38690.91,

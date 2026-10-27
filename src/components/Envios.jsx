@@ -52,12 +52,15 @@ export default function Envios() {
                 </header>
                 {d.tarifa ? (
                   <dl>
-                    {OPCIONES_ENVIO.map((o) => (
-                      <div key={o.id}>
-                        <dt>{o.nombre}</dt>
-                        <dd>{pesos.format(TARIFAS_ENVIO[d.tarifa][o.id])}</dd>
-                      </div>
-                    ))}
+                    {OPCIONES_ENVIO.map((o) => {
+                      const tarifa = TARIFAS_ENVIO[d.tarifa]
+                      return (
+                        <div key={o.id}>
+                          <dt>{o.nombre}<small>{o.detalle(tarifa, pesos.format)}</small></dt>
+                          <dd>{pesos.format(o.precio(tarifa))}</dd>
+                        </div>
+                      )
+                    })}
                   </dl>
                 ) : (
                   <p className="motivo-envio">Sin envío a sucursal ({d.motivo})</p>
