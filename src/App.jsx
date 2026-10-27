@@ -4,6 +4,7 @@ import Historial from './components/Historial.jsx'
 import Catalogo from './components/Catalogo.jsx'
 import Empresa from './components/Empresa.jsx'
 import Apodos from './components/Apodos.jsx'
+import Envios from './components/Envios.jsx'
 import Usuarios from './components/Usuarios.jsx'
 import Ingreso from './components/Ingreso.jsx'
 import { supabase } from './lib/supabase.js'
@@ -20,6 +21,7 @@ const SECCIONES = [
   ['historial', 'Presupuestos'],
   ['catalogo', 'Catálogo y precios'],
   ['apodos', 'Apodos'],
+  ['envios', 'Envíos'],
   ['empresa', 'Datos de la empresa', 'admin'],
   ['usuarios', 'Usuarios', 'admin'],
 ]
@@ -213,6 +215,7 @@ function Aplicacion({ perfil }) {
               />
             )}
             {seccion === 'catalogo' && <Catalogo />}
+            {seccion === 'envios' && <Envios />}
             {seccion === 'apodos' && <Apodos apodos={apodos} onGuardar={guardarApodo} onBorrar={esAdmin ? olvidarApodo : null} />}
             {seccion === 'empresa' && esAdmin && <Empresa empresa={empresa} onGuardar={guardarDatosEmpresa} />}
             {seccion === 'usuarios' && esAdmin && <Usuarios yo={perfil} onError={avisarError} />}

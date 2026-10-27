@@ -229,3 +229,19 @@ label.falta input { border-color: var(--rojo); background: var(--rojo-claro); }
 }
 
 .catalogo th small { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+/* Cotizador de envios */
+.envios .buscador { font-size: 16px; padding: 12px 14px; margin-bottom: 16px; }
+.notas-envio { margin: 0; padding-left: 18px; color: var(--suave); display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.destinos { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.destino { border: 1px solid var(--borde); border-radius: 10px; padding: 14px; background: var(--blanco); }
+.destino header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.destino header strong { font-size: 15px; }
+.destino header span { color: var(--suave); font-size: 12px; text-align: right; }
+.destino dl { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.destino dl div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 6px; border-bottom: 1px dashed var(--borde); }
+.destino dl div:last-child { border-bottom: 0; padding-bottom: 0; }
+.destino dt { color: var(--suave); font-size: 13px; }
+.destino dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.destino.sin-servicio { background: var(--fondo); }
+.motivo-envio { margin: 0; color: var(--ambar); font-size: 13px; }
