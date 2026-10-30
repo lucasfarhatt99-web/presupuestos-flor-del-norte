@@ -126,9 +126,19 @@ const leerSabor = (fragmento) =>
   SABORES_ALMOHADAS.find((s) => fragmento.includes(normalizar(s))) ?? null
 
 // Gana el alias mas largo encontrado ("copos de maiz" es copos, no maiz)
+// Formas libres de nombrar una familia que no entran como alias fijo.
+// "Tutucas" es como le dicen al maiz inflado: tutuca, tutuka, tutuquitas, tutucitas, tutcas, tutu, tucas...
+const PATRONES_FAMILIA = {
+  maiz: /(?:^|\s)(tut[uo]?(?:c|k|qu)\w*|tutus?|tucas?)(?=\s|$)/,
+}
+
 const detectarFamilia = (fragmento) => {
   const palabras = fragmento.split(' ').map(singular).join(' ')
+  // largo 6 = como el alias "tutuca": gana a "maiz" y pierde contra alias mas especificos
   let mejor = null
+  for (const [familia, patron] of Object.entries(PATRONES_FAMILIA)) {
+    if (patron.test(fragmento)) mejor = { familia, largo: 6 }
+  }
   for (const [familia, alias] of Object.entries(ALIAS_FAMILIA)) {
     for (const a of alias) {
       const encontrado = palabras.includes(singular(a)) || fragmento.includes(a)
