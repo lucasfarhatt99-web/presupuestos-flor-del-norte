@@ -81,7 +81,7 @@ export default function Apodos({ apodos, onGuardar, onBorrar }) {
       <h2>Nombres que ya reconoce de fábrica</h2>
       <ul className="alias-fijos">
         {Object.entries(ALIAS_FAMILIA).map(([familia, alias]) => (
-          <li key={familia}><strong>{FAMILIAS[familia]}:</strong> {alias.join(', ')}</li>
+          <li key={familia}><strong>{FAMILIAS[familia]}:</strong> {alias.join(', ')}{familia === 'maiz' && ' (también cualquier variante de tutuca: tutuka, tutuquitas, tutucitas, tutu, tucas)'}</li>
         ))}
       </ul>
     </section>
