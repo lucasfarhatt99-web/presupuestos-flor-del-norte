@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PRODUCTOS, LISTAS, SABORES_ALMOHADAS, productoPorId, etiquetaProducto, etiquetaLinea, tieneSabores, unidadesDe, precioDe } from '../data/catalogo.js'
 import { interpretarMensaje, MENSAJE_EJEMPLO as EJEMPLO } from '../lib/interpretar.js'
-import { calcular, moneda, numeroComprobante, ALICUOTAS_IVA } from '../lib/formato.js'
+import { calcular, moneda, numeroComprobante, nombreArchivoPdf, ALICUOTAS_IVA } from '../lib/formato.js'
 import DocumentoPresupuesto from './DocumentoPresupuesto.jsx'
 
 const ESTADOS = {
@@ -41,8 +41,16 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
     return guardado
   }
 
+  // Durante la impresion el titulo de la pagina pasa a ser el nombre del PDF, y despues vuelve
   const descargarPdf = async () => {
-    if (await guardarPrimero()) setTimeout(() => window.print(), 150)
+    const guardado = await guardarPrimero()
+    if (!guardado) return
+    setTimeout(() => {
+      const tituloOriginal = document.title
+      window.addEventListener('afterprint', () => { document.title = tituloOriginal }, { once: true })
+      document.title = nombreArchivoPdf(empresa.puntoVenta, guardado.numero)
+      window.print()
+    }, 150)
   }
 
   const enviarWhatsapp = async () => {

@@ -16,6 +16,9 @@ export const sumarDias = (iso, dias) => {
 export const numeroComprobante = (puntoVenta, numero) =>
   numero ? `${String(puntoVenta).padStart(4, '0')}-${String(numero).padStart(8, '0')}` : 'sin guardar'
 
+// Nombre con el que se guarda el PDF: el navegador lo toma del titulo de la pagina al imprimir
+export const nombreArchivoPdf = (puntoVenta, numero) => `Presupuesto FDN - N° ${numeroComprobante(puntoVenta, numero)}`
+
 export const plural = (unidad, cantidad) => (cantidad === 1 ? unidad : `${unidad}s`)
 
 export const ALICUOTAS_IVA = [21, 10.5]
