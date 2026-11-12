@@ -60,8 +60,8 @@ export default function DocumentoPresupuesto({ presupuesto, empresa }) {
                 {i.producto.nombre} <span className="presentacion">{i.producto.presentacion}</span>
                 {tieneSabores(i.producto) && i.sabor && <span className="sabor-linea"> · {i.sabor}</span>}
               </td>
-              <td className="num">{moneda(i.precio)}</td>
-              <td className="num">{moneda(i.importe)}</td>
+              <td className="num">{i.sinPrecio ? 'Sin precio' : moneda(i.precio)}</td>
+              <td className="num">{i.sinPrecio ? '-' : moneda(i.importe)}</td>
             </tr>
           ))}
         </tbody>

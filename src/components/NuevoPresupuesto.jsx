@@ -68,7 +68,9 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
   }
 
   const faltaCliente = !cliente.nombre.trim()
-  const sinProductos = !lineas.some((l) => l.productoId) || guardando || faltaCliente
+  // Una linea sin precio en la lista elegida bloquea guardar: nunca se manda un presupuesto con $0
+  const sinPrecio = importes.lineasSinPrecio > 0
+  const sinProductos = !lineas.some((l) => l.productoId) || guardando || faltaCliente || sinPrecio
   const pendientes = lineas.filter((l) => l.estado === 'duda' || l.estado === 'no').length
 
   return (
@@ -161,8 +163,8 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
                           </select>
                         )}
                       </td>
-                      <td className="num">{producto ? moneda(precio) : '-'}</td>
-                      <td className="num">{producto ? moneda(precio * l.cantidad) : '-'}</td>
+                      <td className="num">{!producto ? '-' : precio == null ? <span className="sin-precio">Sin precio en {LISTAS[lista].nombre}</span> : moneda(precio)}</td>
+                      <td className="num">{producto && precio != null ? moneda(precio * l.cantidad) : '-'}</td>
                       <td><button className="quitar" title="Quitar línea" onClick={() => actualizar({ lineas: lineas.filter((_, i) => i !== n) })}>×</button></td>
                     </tr>
                   )
@@ -208,6 +210,7 @@ export default function NuevoPresupuesto({ presupuesto, onCambiar, onGuardar, em
             <button onClick={descargarPdf} disabled={sinProductos}>Descargar PDF</button>
             <button className="whatsapp" onClick={enviarWhatsapp} disabled={sinProductos}>Enviar por WhatsApp</button>
             {faltaCliente && lineas.length > 0 && <p className="falta-nombre">Falta el nombre del cliente</p>}
+            {sinPrecio && <p className="falta-nombre">Hay productos sin precio en {LISTAS[lista].nombre}: cambiá la lista o quitá esas líneas</p>}
           </div>
         </div>
         <DocumentoPresupuesto presupuesto={presupuesto} empresa={empresa} />
