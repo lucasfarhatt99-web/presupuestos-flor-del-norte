@@ -31,7 +31,7 @@ export function calcular({ lineas, lista, descuentoPct, flete = 0, ivaPct = 0 })
     .map((l) => {
       const producto = productoPorId(l.productoId)
       const precio = precioDe(producto, lista, l.unidad)
-      return { ...l, producto, precio, importe: precio * l.cantidad }
+      return { ...l, producto, precio, sinPrecio: precio == null, importe: (precio ?? 0) * l.cantidad }
     })
   const subtotal = items.reduce((s, i) => s + i.importe, 0)
   const descuento = (subtotal * (Number(descuentoPct) || 0)) / 100
@@ -39,5 +39,6 @@ export function calcular({ lineas, lista, descuentoPct, flete = 0, ivaPct = 0 })
   const importeFlete = Number(flete) || 0
   const sinIva = neto + importeFlete
   const iva = (sinIva * (Number(ivaPct) || 0)) / 100
-  return { items, subtotal, descuento, neto, flete: importeFlete, sinIva, iva, total: sinIva + iva }
+  const lineasSinPrecio = items.filter((i) => i.sinPrecio).length
+  return { items, subtotal, descuento, neto, flete: importeFlete, sinIva, iva, total: sinIva + iva, lineasSinPrecio }
 }

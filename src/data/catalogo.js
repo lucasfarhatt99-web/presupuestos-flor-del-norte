@@ -14,10 +14,13 @@ export const LISTAS = {
 const IDS_LISTAS = Object.keys(LISTAS)
 
 // familia: agrupa productos para interpretar mensajes ("tutucas" -> maiz)
-// precios: un precio por bolsa por lista; la caja se calcula
+// precios: un precio por bolsa por lista; la caja se calcula. null = el producto no se vende en esa lista.
 const paquete = (id, nombre, familia, presentacion, bolsasPorCaja, bultosPorPalet, precios, extra = {}) => ({
   id, nombre, familia, presentacion, tipo: 'paquete', bolsasPorCaja, bultosPorPalet,
-  precios: Object.fromEntries(IDS_LISTAS.map((lista, i) => [lista, { bolsa: precios[i], caja: precios[i] * bolsasPorCaja }])),
+  precios: Object.fromEntries(IDS_LISTAS.map((lista, i) => [lista, {
+    bolsa: precios[i] ?? null,
+    caja: precios[i] == null ? null : precios[i] * bolsasPorCaja,
+  }])),
   ...extra,
 })
 
@@ -33,7 +36,9 @@ export const PRODUCTOS = [
   paquete('mi-sd-30', 'Maíz Inflado Super Dulce', 'maiz', '30 g', 24, 150, [273, 314, 369]),
   paquete('mi-sd-cap-8', 'Maíz Inflado Super Dulce Capibara', 'maiz', '8 g', 100, 150, [55, 63, 74], { claves: ['capibara'] }),
   paquete('mi-st-80', 'Maíz Inflado con Stevia', 'maiz', '80 g', 36, 50, [624, 718, 842], { claves: ['stevia'] }),
-  paquete('av-inst-400', 'Avena Instantánea', 'avena', '400 g', 12, 150, [1089, 1307, 1470], { porDefecto: true }),
+  paquete('av-inst-400', 'Avena Instantánea', 'avena', '400 g', 12, 150, [1089, 1307, 1470], { porDefecto: true, claves: ['instantanea'] }),
+  // Solo en lista Premium por ahora (12/11/26). Bultos por palet: sin dato.
+  paquete('av-arr-1k', 'Avena Arrollada', 'avena', '1 kg', 18, null, [1650, null, null], { claves: ['arrollada'] }),
   paquete('copos-20', 'Copos de Maíz', 'copos', '20 g', 300, 30, [211, 221, 261], { porDefecto: true }),
   paquete('trigo-sd-50', 'Trigo Inflado Super Dulce', 'trigo', '50 g', 24, 50, [563, 647, 760], { porDefecto: true }),
   paquete('tost-120', 'Tostadas de Arroz', 'tostadas', '120 g', 18, 50, [792, 911, 1069], { porDefecto: true }),
@@ -44,7 +49,7 @@ export const PRODUCTOS = [
   granel('mi-sd-1k', 'Maíz Inflado Super Dulce', 'maiz', '1 kg', 150, [3200, 3700, 4300]),
   granel('mi-st-5k', 'Maíz Inflado con Stevia', 'maiz', '5 kg', 50, [16500, 19000, 22500], { claves: ['stevia'] }),
   granel('mi-st-1k', 'Maíz Inflado con Stevia', 'maiz', '1 kg', 150, [3300, 3800, 4500], { claves: ['stevia'] }),
-  granel('av-inst-30k', 'Avena Instantánea', 'avena', '30 kg', 25, [49100, 58900, 66300]),
+  granel('av-inst-30k', 'Avena Instantánea', 'avena', '30 kg', 25, [49100, 58900, 66300], { claves: ['instantanea'] }),
   granel('copos-3500', 'Copos de Maíz', 'copos', '3,5 kg', 150, [15050, 16450, 19600]),
   granel('trigo-sd-5k', 'Trigo Inflado Super Dulce', 'trigo', '5 kg', 50, [18000, 20500, 24500]),
   granel('trigo-sd-1k', 'Trigo Inflado Super Dulce', 'trigo', '1 kg', 150, [3600, 4100, 4900]),
@@ -122,4 +127,7 @@ export const etiquetaLinea = (p, sabor) => (tieneSabores(p) && sabor ? `${etique
 
 export const unidadesDe = (p) => (p.tipo === 'paquete' ? ['caja', 'bolsa'] : ['bolsa'])
 
-export const precioDe = (p, lista, unidad) => p?.precios[lista]?.[unidad] ?? 0
+// null si el producto no tiene precio en esa lista (nunca se cotiza como $0)
+export const precioDe = (p, lista, unidad) => p?.precios[lista]?.[unidad] ?? null
+
+export const tienePrecio = (p, lista) => p?.precios[lista]?.bolsa != null

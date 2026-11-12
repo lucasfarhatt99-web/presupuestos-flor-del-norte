@@ -3,6 +3,7 @@ import { moneda } from '../lib/formato.js'
 
 const listas = Object.values(LISTAS)
 const corto = (lista) => lista.nombre.replace('Lista ', '')
+const precioOGuion = (precio) => (precio == null ? <span className="sin-precio">no se vende</span> : moneda(precio))
 
 export default function Catalogo() {
   const paquetes = PRODUCTOS.filter((p) => p.tipo === 'paquete')
@@ -28,7 +29,7 @@ export default function Catalogo() {
               <tr key={p.id}>
                 <td>{p.nombre}</td>
                 <td>{p.presentacion}</td>
-                <td className="num">{p.bolsasPorCaja}</td><td className="num">{p.bultosPorPalet}</td>
+                <td className="num">{p.bolsasPorCaja}</td><td className="num">{p.bultosPorPalet ?? '-'}</td>
                 {listas.map((l) => <PreciosPaquete key={l.id} precios={p.precios[l.id]} />)}
               </tr>
             ))}
@@ -49,7 +50,7 @@ export default function Catalogo() {
             {granel.map((p) => (
               <tr key={p.id}>
                 <td>{p.nombre}</td><td>{p.presentacion}</td><td className="num">{p.bolsasPorPalet}</td>
-                {listas.map((l) => <td key={l.id} className="num">{moneda(p.precios[l.id].bolsa)}</td>)}
+                {listas.map((l) => <td key={l.id} className="num">{precioOGuion(p.precios[l.id].bolsa)}</td>)}
               </tr>
             ))}
           </tbody>
@@ -76,7 +77,7 @@ export default function Catalogo() {
 
 const PreciosPaquete = ({ precios }) => (
   <>
-    <td className="num">{moneda(precios.bolsa)}</td>
-    <td className="num">{moneda(precios.caja)}</td>
+    <td className="num">{precioOGuion(precios.bolsa)}</td>
+    <td className="num">{precioOGuion(precios.caja)}</td>
   </>
 )

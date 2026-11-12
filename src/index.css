@@ -248,3 +248,5 @@ label.falta input { border-color: var(--rojo); background: var(--rojo-claro); }
 .destino dl div { align-items: baseline; }
 .destino dt { font-weight: 600; color: var(--texto); }
 .destino dt small { display: block; font-weight: 400; color: var(--suave); font-size: 11px; margin-top: 2px; }
+
+.sin-precio { color: var(--rojo); font-weight: 500; font-size: 12px; white-space: nowrap; }
